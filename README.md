@@ -42,6 +42,8 @@ For `.7z` files it runs Windows' built-in `tar.exe`, or `7z.exe` if 7-Zip is ins
 | `sys_windows.go` | Loads the Oodle DLL, checks whether the game is running, checks free disk space |
 | `sys_other.go`, `cli_other.go` | Non-Windows test build (command line), used for testing on Linux |
 | `app.manifest`, `icon.ico` | Windows manifest and icon, embedded at build time |
+| `tlou.rc` | Windows resource script: icon, manifest and version info (product name, version, copyright) |
+| `rsrc_windows_amd64.syso` | `tlou.rc` compiled, so the build embeds it automatically. Rebuild it with `llvm-windres --target=pe-x86-64 tlou.rc -O coff -o rsrc_windows_amd64.syso` after changing `tlou.rc` |
 | `icon.ico.b64` | The same icon as base64 text (for copies of the source that can't hold binary files, like a Gist). The build scripts recreate `icon.ico` from it if it's missing |
 
 Dependency: [`github.com/nwaples/rardecode/v2`](https://github.com/nwaples/rardecode) v2.4.1 (BSD-2-Clause) for `.rar` files.
@@ -59,12 +61,15 @@ Or by hand:
 
 ```
 go mod download
+rem only if rsrc_windows_amd64.syso is missing:
 go run github.com/akavel/rsrc@v0.10.2 -manifest app.manifest -ico icon.ico -arch amd64 -o rsrc_windows_amd64.syso
 set GOOS=windows& set GOARCH=amd64& set CGO_ENABLED=0
-go build -trimpath -ldflags "-H windowsgui -s -w" -o "TLOU Mod Installer.exe" .
+go build -trimpath -ldflags "-H windowsgui" -o "TLOU Mod Installer.exe" .
 ```
 
-The `rsrc` step only embeds the icon and manifest. Skipping it still gives a working `.exe`, just without the icon.
+The `rsrc` step is only needed if `rsrc_windows_amd64.syso` is missing; the one in the repo already holds the icon, manifest and version info. The `rsrc` fallback embeds the icon and manifest only. Skipping both still gives a working `.exe`, just without the icon.
+
+Release builds keep their symbol table (no `-s -w`) and include version info: stripped, unlabelled Go programs are often flagged by antivirus heuristics.
 
 ## Making mods for it
 
