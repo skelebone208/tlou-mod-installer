@@ -56,6 +56,15 @@ func (g *Game) Install(m *Mod, ui UI) error {
 	for _, sk := range skipped {
 		ui.Log("  ! not sure where this goes, skipped: " + sk)
 	}
+	kept := items[:0]
+	for _, it := range items {
+		if m.optionalMissing(it.Dest, ix, g.Main) {
+			ui.Log("  (not in this copy of the game, skipped: " + it.Dest + ")")
+			continue
+		}
+		kept = append(kept, it)
+	}
+	items = kept
 	if len(items) == 0 && len(m.Textures()) == 0 {
 		return fmt.Errorf("couldn't find any game files in this mod.\nMod files must have the same names as the game files they replace,\nor sit in the same folders (for example actor97\\joel-head-01-u1-g1-v1.pak).")
 	}
@@ -146,6 +155,10 @@ func (g *Game) Install(m *Mod, ui UI) error {
 			return err
 		}
 	}
+	if err := g.syncSmallArchives(s, ui); err != nil {
+		g.SaveState(s)
+		return err
+	}
 	return g.SaveState(s)
 }
 
@@ -170,13 +183,18 @@ func (g *Game) setupArchive(ai archiveInfo, s *State, ui UI) error {
 	if free := freeSpace(g.Main); free > 0 && free < size+(1<<30) {
 		return fmt.Errorf("one-time setup needs %s of free space on this drive to unpack %s, but only %s is free.", gb(size), ai.Base, gb(free))
 	}
-	if !ui.Confirm("One-time setup", fmt.Sprintf(
+	small := size <= repackLimit
+	if small {
+		ui.Log(fmt.Sprintf("Setting up %s (a small archive: unpacked once, then rebuilt with each mod's changes)...", ai.Base))
+	} else if !ui.Confirm("One-time setup", fmt.Sprintf(
 		"To load mods, the game's %s archive has to be unpacked once into loose files.\n\n"+
 			"This uses about %s of disk space and can take a few minutes.\n"+
 			"The original is kept as %s.bak, and \"Restore original game\" undoes it.\n\nContinue?", ai.Base, gb(size), ai.Base)) {
 		return fmt.Errorf("cancelled")
 	}
-	ui.Log(fmt.Sprintf("Unpacking %s (%s) - one-time setup...", ai.Base, gb(size)))
+	if !small {
+		ui.Log(fmt.Sprintf("Unpacking %s (%s) - one-time setup...", ai.Base, gb(size)))
+	}
 	logPath := filepath.Join(g.stateDir(), "unpacked-"+ai.Base+".txt")
 	os.MkdirAll(g.stateDir(), 0755)
 	created, err := a.Unpack(g.Main, func(done, total int64, name string) { ui.Progress(done, total) })
@@ -213,6 +231,10 @@ func (g *Game) Uninstall(id string, ui UI) error {
 	}
 	delete(s.Mods, id)
 	os.RemoveAll(filepath.Join(g.stateDir(), "backups", id))
+	if err := g.syncSmallArchives(s, ui); err != nil {
+		g.SaveState(s)
+		return err
+	}
 	return g.SaveState(s)
 }
 

@@ -1,7 +1,7 @@
 TLOU MOD INSTALLER - MAKING MODS
 ================================
-Made by skelebone0108. Free to use, share and build on (MIT license).
-Works with The Last of Us Part I (PC) and The Last of Us Part II Remastered (PC).
+Free to use, share and build on. Works with The Last of Us Part I (PC) and
+The Last of Us Part II Remastered (PC).
 
 WHAT THE INSTALLER DOES
 -----------------------
@@ -9,6 +9,13 @@ The games keep their files inside big .psarc archives in build\pc\main.
 The first time a mod needs a file from one of those archives, the installer
 unpacks that archive once into loose files and renames it to .psarc.bak, so
 the game loads the loose files instead. Then it copies the mod's files in.
+
+Small archives (steam.psarc, epic.psarc - the Steam and Epic Extras skins)
+are different: the game only offers their content when the archive itself is
+there. For those the installer still unpacks once (to patch the files), but
+then rebuilds the archive with the mod's changes after every install and
+uninstall, so the game finds it where it expects it. The untouched original is
+kept as .psarc.bak.
 
 Uninstall puts the original files back. They come straight from the game's own
 .bak archive, so nothing is lost even if you installed files by hand before.
@@ -41,6 +48,13 @@ mod.json:
     "game": "tlou1",           <- "tlou1" = Part I, "tlou2" = Part II
     "description": "What it does"
   }
+
+Files that only exist in one store's copy of the game (Steam-only or
+Epic-only skins) can be listed as optional - they're skipped, not added, when
+the game doesn't have them:
+    "optional": ["actor97/ellie-costume-01-steam-mats.pak",
+                 "actor97/ellie-costume-01-epic-mats.pak"]
+Textures whose id isn't in the game are skipped the same way.
 
 Keep the same "id" in new versions: installing a new version over an old one
 updates it (and puts back any files the new version no longer changes).

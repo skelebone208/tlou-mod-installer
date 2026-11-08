@@ -13,6 +13,8 @@ Several mods can be installed at once; if two mods change the same file or textu
 - **One-time setup (`ops.go`):** the first time a mod replaces a file that lives inside an archive, it asks permission.
   It then unpacks that archive into loose files in `build\pc\main` and renames it to `.psarc.bak`, so the game loads the loose files.
   It keeps a list of every file it unpacked.
+- **Small archives (`repack.go`):** archives up to 256 MB (in Part I: `steam.psarc` / `epic.psarc`, which hold the store-exclusive Extras skins) are set up without asking, and after every install and uninstall they are rebuilt from their loose files - original entries plus the mods' changes, blocks stored uncompressed - because the game only offers their content when the archive itself is present. The original stays as `.psarc.bak`.
+- **Optional files:** `mod.json` can list `"optional"` paths (wildcards allowed) that are only installed when this copy of the game has them, e.g. Steam-only or Epic-only files.
 - **Install:** copies the mod's files into `build\pc\main`.
   If it overwrites a file that isn't in an archive, it backs it up first.
 - **Textures (`texpatch.go`):** a mod can ship replacement textures (`textures\*.tex`). Character textures stream from the game's texture dictionaries (`build\pc\main\texturedict3`), so each texture is written into the dictionary slot that holds its id - in every dictionary that has a copy - with the original bytes backed up first. That way the new texture also shows in the Extras skin viewer. A texture that is too big for its slot has its largest mip level dropped until it fits.
@@ -36,6 +38,7 @@ For `.7z` files it runs Windows' built-in `tar.exe`, or `7z.exe` if 7-Zip is ins
 | `game.go` | Finding the game folder, indexing game files, saving state |
 | `mod.go` | Opening `.zip` / `.rar` / `.7z` / folders, reading `mod.json`, working out where each file goes |
 | `psarc.go` | PSARC archive reader |
+| `repack.go` | Rebuilding small archives (Steam / Epic) with the mods' changes; optional files |
 | `sys_windows.go` | Loads the Oodle DLL, checks whether the game is running, checks free disk space |
 | `sys_other.go`, `cli_other.go` | Non-Windows test build (command line), used for testing on Linux |
 | `app.manifest`, `icon.ico` | Windows manifest and icon, embedded at build time |
@@ -73,5 +76,5 @@ See [MODDING.txt](MODDING.txt). In short: zip a `files` folder that mirrors `bui
 
 ## License
 
-Made by **skelebone0108**. MIT license: free to use, change and share, as long as the copyright and license notice is kept (please credit skelebone0108 if you build on it). See [LICENSE](LICENSE) and [THIRD-PARTY-LICENSES.txt](THIRD-PARTY-LICENSES.txt).
+MIT. See [LICENSE](LICENSE) and [THIRD-PARTY-LICENSES.txt](THIRD-PARTY-LICENSES.txt).
 Not affiliated with Naughty Dog or Sony Interactive Entertainment.

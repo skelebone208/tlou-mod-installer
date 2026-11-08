@@ -16,7 +16,7 @@ import (
 )
 
 const appTitle = "TLOU Mod Installer"
-const appVersion = "1.2.0"
+const appVersion = "1.3.1"
 
 var (
 	user32   = syscall.NewLazyDLL("user32.dll")

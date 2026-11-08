@@ -24,6 +24,9 @@ type Manifest struct {
 	Description string `json:"description"`
 	Game        string `json:"game"`  // "tlou1" or "tlou2"
 	Files       string `json:"files"` // folder (inside the archive) that mirrors build\pc\main; default "files"
+	// files that are only installed when this copy of the game has them
+	// (e.g. Steam-only or Epic-only files), as paths inside "files" (wildcards ok)
+	Optional []string `json:"optional,omitempty"`
 }
 
 type Mod struct {
